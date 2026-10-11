@@ -1,16 +1,17 @@
-"""Generate the technical report PDF (max 4 pages)."""
+"""Generate a student-style technical report PDF (max 4 pages) with title page."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import (
     Image,
+    KeepTogether,
     PageBreak,
     Paragraph,
     SimpleDocTemplate,
@@ -22,54 +23,112 @@ from reportlab.platypus import (
 
 ROOT = Path(__file__).resolve().parent
 RESULTS = ROOT / "results"
+ASSETS = ROOT / "report" / "title_assets"
 OUT = ROOT / "report" / "Technical_Report.pdf"
+
+# Student details (from Uni/title page.docx)
+STUDENT_NAME = "Azhar Mehmood"
+REG_NO = "FA23-BAI-039"
+COURSE = "Reinforcement Learning / AI Assignment"
+ASSIGNMENT_TITLE = (
+    "Custom Reinforcement Learning Agent Implementation using Farama Gymnasium"
+)
 
 
 def build_styles():
     styles = getSampleStyleSheet()
     styles.add(
         ParagraphStyle(
-            name="TitleCenter",
-            parent=styles["Title"],
+            name="UniTitle",
+            fontName="Times-Bold",
+            fontSize=22,
+            leading=26,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor("#4472C4"),
+            spaceAfter=18,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="CoverLine",
+            fontName="Times-Bold",
             fontSize=14,
             leading=18,
             alignment=TA_CENTER,
+            textColor=colors.HexColor("#4472C4"),
+            spaceAfter=8,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="CoverBody",
+            fontName="Times-Roman",
+            fontSize=12,
+            leading=16,
+            alignment=TA_CENTER,
             spaceAfter=6,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="CoverMeta",
+            fontName="Times-Bold",
+            fontSize=12,
+            leading=16,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor("#0D0D0D"),
+            spaceAfter=4,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="TitleCenter",
+            parent=styles["Title"],
+            fontName="Times-Bold",
+            fontSize=13,
+            leading=16,
+            alignment=TA_CENTER,
+            spaceAfter=4,
         )
     )
     styles.add(
         ParagraphStyle(
             name="SubCenter",
             parent=styles["Normal"],
+            fontName="Times-Roman",
             fontSize=10,
             alignment=TA_CENTER,
-            spaceAfter=12,
+            spaceAfter=10,
         )
     )
     styles.add(
         ParagraphStyle(
             name="BodyJust",
             parent=styles["Normal"],
-            fontSize=9.5,
-            leading=12,
+            fontName="Times-Roman",
+            fontSize=10,
+            leading=13,
             alignment=TA_JUSTIFY,
-            spaceAfter=6,
+            spaceAfter=7,
         )
     )
     styles.add(
         ParagraphStyle(
             name="H2Custom",
             parent=styles["Heading2"],
-            fontSize=11,
-            spaceBefore=8,
+            fontName="Times-Bold",
+            fontSize=11.5,
+            spaceBefore=9,
             spaceAfter=4,
+            textColor=colors.HexColor("#1F4E79"),
         )
     )
     styles.add(
         ParagraphStyle(
             name="H3Custom",
             parent=styles["Heading3"],
-            fontSize=10,
+            fontName="Times-Bold",
+            fontSize=10.5,
             spaceBefore=6,
             spaceAfter=3,
         )
@@ -78,19 +137,64 @@ def build_styles():
         ParagraphStyle(
             name="Caption",
             parent=styles["Normal"],
-            fontSize=8,
+            fontName="Times-Italic",
+            fontSize=8.5,
             alignment=TA_CENTER,
             textColor=colors.HexColor("#333333"),
             spaceAfter=8,
         )
     )
+    styles.add(
+        ParagraphStyle(
+            name="Formula",
+            parent=styles["Normal"],
+            fontName="Times-Bold",
+            fontSize=10,
+            alignment=TA_CENTER,
+            spaceBefore=4,
+            spaceAfter=6,
+        )
+    )
     return styles
 
 
-def maybe_image(path: Path, width: float = 6.2 * inch, height: float = 2.0 * inch):
+def maybe_image(path: Path, width: float, height: float):
     if path.exists():
         return Image(str(path), width=width, height=height)
     return Paragraph(f"[Missing figure: {path.name}]", getSampleStyleSheet()["Normal"])
+
+
+def build_title_page(styles):
+    """Simple cover modeled on Uni/title page.docx."""
+    story = []
+    story.append(Spacer(1, 0.35 * inch))
+    story.append(Paragraph("ASSIGNMENT", styles["UniTitle"]))
+    story.append(Spacer(1, 0.15 * inch))
+
+    logo = ASSETS / "image1.png"
+    if logo.exists():
+        img = Image(str(logo), width=1.7 * inch, height=1.55 * inch)
+        img.hAlign = "CENTER"
+        story.append(img)
+    story.append(Spacer(1, 0.35 * inch))
+
+    story.append(Paragraph(ASSIGNMENT_TITLE, styles["CoverLine"]))
+    story.append(Spacer(1, 0.15 * inch))
+    story.append(Paragraph(COURSE, styles["CoverBody"]))
+    story.append(
+        Paragraph(
+            "Environment: CliffWalking-v1 &nbsp;&nbsp;|&nbsp;&nbsp; Algorithm: Q-Learning",
+            styles["CoverBody"],
+        )
+    )
+    story.append(Spacer(1, 0.7 * inch))
+    story.append(Paragraph(f"Name: {STUDENT_NAME}", styles["CoverMeta"]))
+    story.append(Paragraph(f"Reg. No: {REG_NO}", styles["CoverMeta"]))
+    story.append(Spacer(1, 0.35 * inch))
+    story.append(Paragraph("Submission: GitHub Repository Link + Technical Report (PDF)", styles["CoverBody"]))
+    story.append(Paragraph("Due Date: 20/10/2026", styles["CoverBody"]))
+    story.append(PageBreak())
+    return story
 
 
 def main() -> None:
@@ -99,24 +203,21 @@ def main() -> None:
     doc = SimpleDocTemplate(
         str(OUT),
         pagesize=A4,
-        leftMargin=0.65 * inch,
-        rightMargin=0.65 * inch,
-        topMargin=0.55 * inch,
-        bottomMargin=0.55 * inch,
-        title="Technical Report — Custom RL Agent (CliffWalking Q-Learning)",
+        leftMargin=0.7 * inch,
+        rightMargin=0.7 * inch,
+        topMargin=0.6 * inch,
+        bottomMargin=0.6 * inch,
+        title="Technical Report - CliffWalking Q-Learning",
+        author=STUDENT_NAME,
     )
 
     story = []
+    story.extend(build_title_page(styles))
+
+    story.append(Paragraph("Technical Report", styles["TitleCenter"]))
     story.append(
         Paragraph(
-            "Custom Reinforcement Learning Agent Implementation using Farama Gymnasium",
-            styles["TitleCenter"],
-        )
-    )
-    story.append(
-        Paragraph(
-            "Student ID: Fa23-bai-039 &nbsp;|&nbsp; Environment: CliffWalking-v1 &nbsp;|&nbsp; "
-            "Algorithm: Tabular Q-Learning (from scratch)",
+            f"{STUDENT_NAME} ({REG_NO}) &nbsp;|&nbsp; CliffWalking-v1 &nbsp;|&nbsp; Q-Learning from scratch",
             styles["SubCenter"],
         )
     )
@@ -125,100 +226,96 @@ def main() -> None:
     story.append(Paragraph("1. Problem Description", styles["H2Custom"]))
     story.append(
         Paragraph(
-            "This work implements and evaluates a tabular Q-Learning agent on the Farama Gymnasium "
-            "<b>CliffWalking-v1</b> benchmark. The environment is a 4×12 grid world (48 discrete states). "
-            "The agent starts at the bottom-left cell and must reach the goal at the bottom-right cell. "
-            "Between start and goal lies a cliff: stepping into any cliff cell incurs a large penalty and "
-            "resets the agent to the start. The action space is discrete with four moves: "
-            "<b>0=Up, 1=Right, 2=Down, 3=Left</b>.",
+            "For this assignment I picked <b>CliffWalking-v1</b> from Gymnasium. It is a small 4x12 grid "
+            "(48 states), so I could implement the algorithm myself without needing neural networks. "
+            "The agent starts at the bottom-left cell and has to reach the goal at the bottom-right. "
+            "There is a cliff along the bottom row. If the agent steps into the cliff, it gets a big "
+            "penalty and goes back to the start. Actions are simple: "
+            "<b>0 = Up, 1 = Right, 2 = Down, 3 = Left</b>.",
             styles["BodyJust"],
         )
     )
     story.append(
         Paragraph(
-            "<b>Reward structure:</b> each transition yields <b>−1</b> (step cost). Falling off the cliff "
-            "yields <b>−100</b> and returns the agent to the start (episode continues until the goal or "
-            "truncation). Reaching the goal terminates the episode. An optimal safe path along the cliff "
-            "edge has return −13 (13 steps). A safer but longer detour yields a more negative return. "
-            "This creates a classic exploration–safety trade-off that makes CliffWalking a strong testbed "
-            "for on-policy vs off-policy learning behavior.",
+            "Reward setup is also straightforward. Every step gives <b>-1</b>. Falling into the cliff "
+            "gives <b>-100</b>. Reaching the goal ends the episode. The best safe path is 13 steps, so "
+            "the best score is <b>-13</b>. If the agent takes a longer upper path, the score gets worse "
+            "(more negative). That tradeoff is why this environment is useful for testing an RL agent.",
             styles["BodyJust"],
         )
     )
 
     # 2. Methodology
     story.append(Paragraph("2. Methodology", styles["H2Custom"]))
-    story.append(Paragraph("2.1 Algorithm Formulation", styles["H3Custom"]))
+    story.append(Paragraph("2.1 Algorithm", styles["H3Custom"]))
     story.append(
         Paragraph(
-            "We use <b>ε-greedy Q-Learning</b>, an off-policy temporal-difference control algorithm. "
-            "A Q-table <i>Q(s,a) ∈ ℝ<sup>|S|×|A|</sup></i> estimates action values. At each step the agent "
-            "selects a random action with probability ε (exploration) and otherwise selects "
-            "<i>arg max<sub>a</sub> Q(s,a)</i> (exploitation). After observing transition "
-            "<i>(s,a,r,s′)</i>, the update is:",
+            "I implemented <b>Q-Learning</b> with an epsilon-greedy policy. The idea is to keep a table "
+            "Q(s, a) for every state-action pair. Most of the time the agent picks the action with the "
+            "highest Q value, but with probability epsilon it picks a random action so it can explore. "
+            "After each step, the table is updated with:",
             styles["BodyJust"],
         )
     )
     story.append(
         Paragraph(
-            "<b>Q(s,a) ← Q(s,a) + α [ r + γ max<sub>a′</sub> Q(s′,a′) − Q(s,a) ]</b> &nbsp;&nbsp;(terminal: bootstrap target = r)",
-            styles["BodyJust"],
+            "Q(s,a) = Q(s,a) + alpha * [ r + gamma * max Q(s',a') - Q(s,a) ]",
+            styles["Formula"],
         )
     )
     story.append(
         Paragraph(
-            "Here <i>α</i> is the learning rate, <i>γ</i> the discount factor, and ε decays exponentially "
-            "each episode: <i>ε ← max(ε<sub>min</sub>, ε · ε<sub>decay</sub>)</i>. Because the bootstrap "
-            "uses <i>max<sub>a′</sub> Q(s′,a′)</i> rather than the behavior action, Q-Learning can learn "
-            "the optimal policy while still exploring.",
+            "Here alpha is the learning rate and gamma is the discount factor. Epsilon starts at 1.0 and "
+            "slowly decays after every episode down to 0.01. I used the max over next actions in the "
+            "update, which is the normal off-policy Q-Learning rule.",
             styles["BodyJust"],
         )
     )
-    story.append(Paragraph("2.2 Implementation Architecture", styles["H3Custom"]))
+    story.append(Paragraph("2.2 Code Structure", styles["H3Custom"]))
     story.append(
         Paragraph(
-            "The codebase is modular: <b>agent.py</b> contains <i>QLearningAgent</i> (action selection, "
-            "TD update, ε-decay, save/load); <b>utils.py</b> provides environment creation, the training "
-            "loop, evaluation, plotting, GIF rendering, and a hyperparameter sweep; <b>main.py</b> is the "
-            "CLI entry point that wires training, evaluation, artifact export, and sensitivity analysis. "
-            "The environment is created with <i>gymnasium.make(\"CliffWalking-v1\")</i>. Trained weights "
-            "are stored as <i>models/q_table.npy</i> (and <i>.npz</i> with hyperparameters). A short "
-            "rgb_array rollout is saved as <i>results/agent_demo.gif</i>.",
+            "I split the code into three files so it stays easy to read. <b>agent.py</b> has the "
+            "QLearningAgent class (choose action, update Q, decay epsilon, save/load). "
+            "<b>utils.py</b> has training, evaluation, plots, and GIF rendering. <b>main.py</b> runs "
+            "the full pipeline from the terminal. The environment is created with "
+            "<i>gymnasium.make(\"CliffWalking-v1\")</i>. After training, I save the Q-table as "
+            "<i>models/q_table.npy</i> and a short demo clip as <i>results/agent_demo.gif</i>.",
             styles["BodyJust"],
         )
     )
 
     # 3. Experimental Setup
-    story.append(Paragraph("3. Experimental Setup &amp; Hyperparameters", styles["H2Custom"]))
+    story.append(Paragraph("3. Experimental Setup and Hyperparameters", styles["H2Custom"]))
     story.append(
         Paragraph(
-            "All experiments use Python 3 with Gymnasium. The final tuned configuration (used for the "
-            "saved model and demo GIF) is listed below. Sensitivity runs train for 3,000 episodes under "
-            "identical seeds while varying one factor at a time.",
+            "I trained in Python using Gymnasium. The table below shows the final settings I kept for "
+            "the saved model and GIF. For the sensitivity test, I trained again for 3000 episodes and "
+            "changed one setting at a time (same seed).",
             styles["BodyJust"],
         )
     )
 
     table_data = [
-        ["Hyperparameter", "Symbol", "Final Value", "Notes"],
-        ["Learning rate", "α", "0.5", "Faster than 0.1; stable vs 0.9"],
-        ["Discount factor", "γ", "0.99", "Prefers near-optimal short paths"],
-        ["Initial epsilon", "ε₀", "1.0", "Fully exploratory start"],
-        ["Minimum epsilon", "ε_min", "0.01", "Residual exploration"],
-        ["Epsilon decay", "ε_decay", "0.995", "Per-episode multiplicative"],
+        ["Hyperparameter", "Symbol", "Value", "Why I chose it"],
+        ["Learning rate", "alpha", "0.5", "0.1 was slow; 0.9 was less stable"],
+        ["Discount factor", "gamma", "0.99", "Helps the agent care about reaching goal"],
+        ["Start epsilon", "eps0", "1.0", "Start fully random"],
+        ["Min epsilon", "eps_min", "0.01", "Keep a little exploration"],
+        ["Epsilon decay", "eps_decay", "0.995", "Decay once per episode"],
         ["Training episodes", "N", "5000", "Main training run"],
-        ["Max steps / episode", "T", "200", "Safety truncation"],
-        ["Evaluation episodes", "—", "100", "Greedy policy"],
-        ["Random seed", "—", "42", "Reproducibility"],
+        ["Max steps", "T", "200", "Stop very long episodes"],
+        ["Eval episodes", "-", "100", "Test greedy policy"],
+        ["Seed", "-", "42", "Same seed for fair comparison"],
     ]
-    table = Table(table_data, colWidths=[1.55 * inch, 0.7 * inch, 1.0 * inch, 2.6 * inch])
+    table = Table(table_data, colWidths=[1.45 * inch, 0.75 * inch, 0.75 * inch, 2.85 * inch])
     table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2f5496")),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4472C4")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 8.5),
+                ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
+                ("FONTNAME", (0, 1), (-1, -1), "Times-Roman"),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
                 ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
                 ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.whitesmoke, colors.Color(0.93, 0.93, 0.97)]),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -233,63 +330,54 @@ def main() -> None:
     story.append(Spacer(1, 6))
 
     # 4. Results
-    story.append(Paragraph("4. Results &amp; Discussion", styles["H2Custom"]))
+    story.append(Paragraph("4. Results and Discussion", styles["H2Custom"]))
     story.append(
         Paragraph(
-            "After 5,000 training episodes, greedy evaluation over 100 episodes achieved a mean return of "
-            "<b>−13.0 ± 0.0</b> with a <b>100%</b> success rate — matching the optimal safe path length. "
-            "Training curves show rapid improvement within the first ~1–2k episodes, then stabilization as ε "
-            "decays. The learned value heatmap concentrates higher values along the path to the goal and lower "
-            "values near cliff cells, indicating the agent internalized the cliff penalty.",
+            "After 5000 episodes, I tested the greedy policy for 100 episodes. The average return was "
+            "<b>-13.0</b> with <b>0</b> variance, and success rate was <b>100%</b>. That means the agent "
+            "learned the optimal 13-step path. Looking at Figure 1, reward improves a lot in the first "
+            "1000-2000 episodes, then becomes more stable as epsilon gets small. Figure 2 shows the "
+            "learned values on the grid. Cells near the good path have higher values, and cells near "
+            "the cliff look worse, which makes sense.",
             styles["BodyJust"],
         )
     )
-    story.append(maybe_image(RESULTS / "training_curves.png", width=6.3 * inch, height=1.95 * inch))
-    story.append(Paragraph("Figure 1. Training reward, success rate, and ε decay.", styles["Caption"]))
+    story.append(maybe_image(RESULTS / "training_curves.png", width=6.2 * inch, height=1.9 * inch))
+    story.append(Paragraph("Figure 1. Reward, success rate, and epsilon during training.", styles["Caption"]))
 
-    story.append(maybe_image(RESULTS / "q_value_heatmap.png", width=6.0 * inch, height=1.7 * inch))
-    story.append(Paragraph("Figure 2. Learned state values (max_a Q(s,a)) on the 4×12 grid.", styles["Caption"]))
+    story.append(maybe_image(RESULTS / "q_value_heatmap.png", width=5.9 * inch, height=1.65 * inch))
+    story.append(Paragraph("Figure 2. Max Q-value for each cell on the 4x12 map.", styles["Caption"]))
 
     story.append(PageBreak())
     story.append(
         Paragraph(
-            "<b>Hyperparameter sensitivity.</b> Moderate learning rates (α ≈ 0.5) outperform very small "
-            "α (slow learning within a fixed episode budget) and can be more stable than very large α "
-            "(noisy updates). High γ (0.99) encourages valuing future goal attainment over myopic "
-            "step-cost minimization alone. Slower ε decay prolongs exploration: helpful early, but it "
-            "can delay convergence of the reported greedy evaluation if too much random walking persists "
-            "late in training.",
+            "For hyperparameter checks (Figure 3), alpha = 0.5 worked better than alpha = 0.1 in the "
+            "same episode budget. Gamma = 0.99 was fine for this task. When I decayed epsilon too slowly "
+            "(0.999), the agent kept exploring for longer, so the late training return stayed worse. "
+            "Overall, learning rate and epsilon decay affected the results the most in my runs.",
             styles["BodyJust"],
         )
     )
     story.append(
-        maybe_image(RESULTS / "hyperparameter_sensitivity.png", width=5.8 * inch, height=2.6 * inch)
+        maybe_image(RESULTS / "hyperparameter_sensitivity.png", width=5.7 * inch, height=2.55 * inch)
     )
     story.append(
         Paragraph(
-            "Figure 3. Mean return over the last 500 episodes for each hyperparameter configuration.",
+            "Figure 3. Average return in the last 500 episodes for different settings.",
             styles["Caption"],
         )
     )
 
-    story.append(Paragraph("4.1 Failure Modes &amp; Observations", styles["H3Custom"]))
+    story.append(Paragraph("4.1 Problems I Noticed", styles["H3Custom"]))
     story.append(
         Paragraph(
-            "(1) <b>Cliff falls during exploration:</b> high ε causes frequent −100 penalties early on; "
-            "this is expected and necessary for discovering cliff boundaries. (2) <b>Suboptimal long "
-            "detours:</b> if exploration is insufficient near the cliff edge, the agent may converge to a "
-            "safer upper-row path with worse return than the optimal −13 path. (3) <b>Maximization bias:</b> "
-            "standard Q-Learning can overestimate action values; Double Q-Learning would be a natural "
-            "extension. (4) <b>Discrete tabular limit:</b> this solution does not transfer to continuous "
-            "control (e.g., CartPole) without function approximation (DQN/Policy Gradient).",
-            styles["BodyJust"],
-        )
-    )
-    story.append(
-        Paragraph(
-            "Qualitatively, the rendered GIF (<i>results/agent_demo.gif</i>) shows the greedy policy "
-            "navigating from start to goal without falling, confirming that the learned policy solves the "
-            "task under evaluation conditions.",
+            "Early in training the agent falls into the cliff a lot because epsilon is high. That looks "
+            "bad in the reward plot, but it is normal while it is still exploring. Sometimes the agent "
+            "can also learn a safer but longer path on the upper rows, which gives a worse score than "
+            "-13. Another limit is that this is a table method, so it works for CliffWalking, but it "
+            "would not directly work for continuous games like CartPole unless I switch to something "
+            "like DQN. The demo GIF shows the final greedy policy walking from start to goal without "
+            "falling.",
             styles["BodyJust"],
         )
     )
@@ -298,21 +386,19 @@ def main() -> None:
     story.append(Paragraph("5. Conclusion", styles["H2Custom"]))
     story.append(
         Paragraph(
-            "We implemented a complete from-scratch Q-Learning pipeline on Gymnasium CliffWalking-v1, "
-            "including modular training code, reproducible hyperparameters, evaluation metrics, training "
-            "visualizations, a saved Q-table, and a policy GIF. The agent converges to a successful "
-            "goal-reaching policy. Hyperparameter analysis confirms that α, γ, and ε-decay materially "
-            "affect sample efficiency and final return. Future work includes Double Q-Learning, SARSA "
-            "(safer on-policy cliff behavior), and deep RL on continuous Gymnasium tasks.",
+            "In this assignment I built a Q-Learning agent from scratch on CliffWalking-v1, trained it, "
+            "plotted the learning curves, saved the Q-table, and recorded a short GIF of the final "
+            "policy. The agent reached the optimal score (-13) in evaluation. Changing alpha, gamma, and "
+            "epsilon decay clearly changed how fast and how well it learned. If I continue this work, I "
+            "would try SARSA (usually safer near the cliff) or Double Q-Learning next.",
             styles["BodyJust"],
         )
     )
-    story.append(Spacer(1, 8))
     story.append(
         Paragraph(
-            "<b>Artifacts:</b> source (<i>main.py</i>, <i>agent.py</i>, <i>utils.py</i>), "
-            "notebook (<i>notebooks/training.ipynb</i>), model (<i>models/q_table.npy</i>), "
-            "figures/GIF (<i>results/</i>).",
+            "<b>GitHub:</b> https://github.com/azhar-fullstack/RL-Assignment-CliffWalking-QLearning<br/>"
+            "<b>Main files:</b> main.py, agent.py, utils.py, notebooks/training.ipynb, models/q_table.npy, "
+            "results/agent_demo.gif",
             styles["BodyJust"],
         )
     )
