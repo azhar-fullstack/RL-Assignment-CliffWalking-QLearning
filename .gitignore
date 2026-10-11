@@ -1,4 +1,4 @@
-__pycache__/
+﻿__pycache__/
 *.py[cod]
 .venv/
 venv/
@@ -8,3 +8,7 @@ venv/
 *.egg-info/
 dist/
 build/
+report/preview/
+report/_report_body.docx
+report/Title_Page_Filled.docx
+report/title_assets/
