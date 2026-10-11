@@ -25,11 +25,9 @@ OUT_PDF = ROOT / "report" / "Technical_Report.pdf"
 BODY_DOCX = ROOT / "report" / "_report_body.docx"
 
 GITHUB = "https://github.com/azhar-fullstack/RL-Assignment-CliffWalking-QLearning"
-NAME = "Azhar Mehmood"
-REG = "FA23-BAI-039"
 
 
-def set_run_font(run, size=11, bold=False, italic=False, color=None, name="Times New Roman"):
+def set_run_font(run, size=12, bold=False, italic=False, color=None, name="Times New Roman"):
     run.font.name = name
     run._element.rPr.rFonts.set(qn("w:eastAsia"), name)
     run.font.size = Pt(size)
@@ -39,7 +37,7 @@ def set_run_font(run, size=11, bold=False, italic=False, color=None, name="Times
         run.font.color.rgb = color
 
 
-def set_paragraph_spacing(p, before=0, after=6, line=1.1):
+def set_paragraph_spacing(p, before=0, after=8, line=1.15):
     pf = p.paragraph_format
     pf.space_before = Pt(before)
     pf.space_after = Pt(after)
@@ -50,11 +48,11 @@ def add_heading(doc, text, level=1):
     p = doc.add_paragraph()
     run = p.add_run(text)
     if level == 1:
-        set_run_font(run, size=13, bold=True, color=RGBColor(0x1F, 0x4E, 0x79))
-        set_paragraph_spacing(p, before=10, after=4, line=1.1)
+        set_run_font(run, size=14, bold=True, color=RGBColor(0x1F, 0x4E, 0x79))
+        set_paragraph_spacing(p, before=12, after=6, line=1.15)
     else:
-        set_run_font(run, size=11.5, bold=True, color=RGBColor(0x2F, 0x54, 0x96))
-        set_paragraph_spacing(p, before=8, after=3, line=1.1)
+        set_run_font(run, size=12, bold=True, color=RGBColor(0x2F, 0x54, 0x96))
+        set_paragraph_spacing(p, before=10, after=4, line=1.15)
     return p
 
 
@@ -62,8 +60,8 @@ def add_body(doc, text):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     run = p.add_run(text)
-    set_run_font(run, size=10.5)
-    set_paragraph_spacing(p, before=0, after=6, line=1.1)
+    set_run_font(run, size=12)
+    set_paragraph_spacing(p, before=0, after=8, line=1.15)
     return p
 
 
@@ -71,16 +69,16 @@ def add_formula(doc, text):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run(text)
-    set_run_font(run, size=10.5, bold=True)
-    set_paragraph_spacing(p, before=4, after=6, line=1.1)
+    set_run_font(run, size=12, bold=True)
+    set_paragraph_spacing(p, before=6, after=8, line=1.15)
 
 
 def add_caption(doc, text):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run(text)
-    set_run_font(run, size=9, italic=True, color=RGBColor(0x40, 0x40, 0x40))
-    set_paragraph_spacing(p, before=1, after=8, line=1.0)
+    set_run_font(run, size=10, italic=True, color=RGBColor(0x40, 0x40, 0x40))
+    set_paragraph_spacing(p, before=2, after=10, line=1.0)
 
 
 def add_picture(doc, path: Path, width_in=6.0):
@@ -137,7 +135,7 @@ def add_hyperparam_table(doc: Document):
         cell = table.rows[0].cells[j]
         cell.text = ""
         run = cell.paragraphs[0].add_run(h)
-        set_run_font(run, size=9.5, bold=True, color=RGBColor(0xFF, 0xFF, 0xFF))
+        set_run_font(run, size=11, bold=True, color=RGBColor(0xFF, 0xFF, 0xFF))
         set_cell_shading(cell, "4472C4")
 
     for i, row in enumerate(rows, start=1):
@@ -145,7 +143,7 @@ def add_hyperparam_table(doc: Document):
             cell = table.rows[i].cells[j]
             cell.text = ""
             run = cell.paragraphs[0].add_run(val)
-            set_run_font(run, size=9)
+            set_run_font(run, size=11)
             if i % 2 == 0:
                 set_cell_shading(cell, "F2F2F2")
     doc.add_paragraph()
@@ -153,33 +151,44 @@ def add_hyperparam_table(doc: Document):
 
 def build_report_body_docx() -> Path:
     doc = Document()
+    normal = doc.styles["Normal"]
+    normal.font.name = "Times New Roman"
+    normal.font.size = Pt(12)
+    normal._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
     for section in doc.sections:
-        section.top_margin = Inches(0.65)
-        section.bottom_margin = Inches(0.65)
-        section.left_margin = Inches(0.8)
-        section.right_margin = Inches(0.8)
+        section.top_margin = Inches(0.7)
+        section.bottom_margin = Inches(0.7)
+        section.left_margin = Inches(0.85)
+        section.right_margin = Inches(0.85)
 
+    # Top of report: title + GitHub only (name/reg already on title page)
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run("Technical Report")
-    set_run_font(run, size=16, bold=True, color=RGBColor(0x1F, 0x4E, 0x79))
-    set_paragraph_spacing(p, before=0, after=3)
+    set_run_font(run, size=18, bold=True, color=RGBColor(0x1F, 0x4E, 0x79))
+    set_paragraph_spacing(p, before=0, after=4)
 
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run(
         "Custom Reinforcement Learning Agent Implementation using Farama Gymnasium"
     )
-    set_run_font(run, size=11.5, bold=True)
-    set_paragraph_spacing(p, before=0, after=2)
+    set_run_font(run, size=13, bold=True)
+    set_paragraph_spacing(p, before=0, after=4)
 
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run(
-        f"{NAME}  |  {REG}  |  CliffWalking-v1  |  Q-Learning (from scratch)"
-    )
-    set_run_font(run, size=10, italic=True, color=RGBColor(0x40, 0x40, 0x40))
-    set_paragraph_spacing(p, before=0, after=10)
+    run = p.add_run("CliffWalking-v1  |  Q-Learning (from scratch)")
+    set_run_font(run, size=12, italic=True, color=RGBColor(0x40, 0x40, 0x40))
+    set_paragraph_spacing(p, before=0, after=6)
+
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run("GitHub Repository: ")
+    set_run_font(run, size=12, bold=True)
+    run = p.add_run(GITHUB)
+    set_run_font(run, size=12, color=RGBColor(0x05, 0x63, 0xC1))
+    set_paragraph_spacing(p, before=0, after=12)
 
     add_heading(doc, "1. Problem Description", 1)
     add_body(
@@ -241,9 +250,9 @@ def build_report_body_docx() -> Path:
         "as epsilon gets small. Figure 2 shows higher values along the good path and lower values "
         "near the cliff.",
     )
-    add_picture(doc, RESULTS / "training_curves.png", width_in=6.1)
+    add_picture(doc, RESULTS / "training_curves.png", width_in=5.9)
     add_caption(doc, "Figure 1. Reward, success rate, and epsilon during training.")
-    add_picture(doc, RESULTS / "q_value_heatmap.png", width_in=5.8)
+    add_picture(doc, RESULTS / "q_value_heatmap.png", width_in=5.6)
     add_caption(doc, "Figure 2. Max Q-value for each cell on the 4x12 map.")
     add_body(
         doc,
@@ -252,7 +261,7 @@ def build_report_body_docx() -> Path:
         "high for longer, so late training return stayed worse. Learning rate and epsilon decay "
         "mattered the most in my runs.",
     )
-    add_picture(doc, RESULTS / "hyperparameter_sensitivity.png", width_in=5.5)
+    add_picture(doc, RESULTS / "hyperparameter_sensitivity.png", width_in=5.3)
     add_caption(doc, "Figure 3. Average return in the last 500 episodes for different settings.")
 
     add_heading(doc, "4.1 Problems I Noticed", 2)
@@ -271,23 +280,10 @@ def build_report_body_docx() -> Path:
         "I built a from-scratch Q-Learning agent on CliffWalking-v1, trained it, plotted the "
         "curves, saved the Q-table, and recorded a short GIF. In evaluation it reached the "
         "optimal score (-13). Changing alpha, gamma, and epsilon decay clearly changed learning "
-        "speed and final return. Next I would try SARSA or Double Q-Learning.",
+        "speed and final return. Next I would try SARSA or Double Q-Learning. Main files are "
+        "main.py, agent.py, utils.py, notebooks/training.ipynb, models/q_table.npy, and "
+        "results/agent_demo.gif.",
     )
-
-    p = doc.add_paragraph()
-    run = p.add_run("GitHub: ")
-    set_run_font(run, size=10.5, bold=True)
-    run = p.add_run(GITHUB)
-    set_run_font(run, size=10, color=RGBColor(0x05, 0x63, 0xC1))
-    set_paragraph_spacing(p, before=4, after=3)
-
-    p = doc.add_paragraph()
-    run = p.add_run(
-        "Files: main.py, agent.py, utils.py, notebooks/training.ipynb, "
-        "models/q_table.npy, results/agent_demo.gif"
-    )
-    set_run_font(run, size=9.5)
-    set_paragraph_spacing(p, before=0, after=2)
 
     BODY_DOCX.parent.mkdir(parents=True, exist_ok=True)
     doc.save(str(BODY_DOCX))
@@ -356,16 +352,28 @@ def main() -> None:
         for page in body_reader.pages:
             writer.add_page(page)
 
-        with OUT_PDF.open("wb") as f:
+        tmp_out = OUT_PDF.with_name("Technical_Report_new.pdf")
+        with tmp_out.open("wb") as f:
             writer.write(f)
 
-        # Save a convenient DOCX: copy body as Technical_Report.docx and also
-        # keep a note file? User asked for PDF mainly. Still save body docx path
-        # as Technical_Report.docx for editing if needed.
+        try:
+            if OUT_PDF.exists():
+                OUT_PDF.unlink()
+            tmp_out.replace(OUT_PDF)
+            final_path = OUT_PDF
+        except PermissionError:
+            # PDF open in a viewer — keep the new file so work is not lost
+            final_path = tmp_out
+            print(
+                f"WARNING: {OUT_PDF.name} is open/locked. "
+                f"Saved updated report as {tmp_out.name}. "
+                "Close the old PDF and rename if needed."
+            )
+
         OUT_DOCX.write_bytes(body_docx.read_bytes())
 
-    reader = PdfReader(str(OUT_PDF))
-    print(f"Wrote final PDF: {OUT_PDF} ({len(reader.pages)} pages)")
+    reader = PdfReader(str(final_path))
+    print(f"Wrote final PDF: {final_path} ({len(reader.pages)} pages)")
     print("Page 1 = original Uni/title page.docx first page (logo preserved).")
 
 
